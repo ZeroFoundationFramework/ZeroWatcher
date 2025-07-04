@@ -5,12 +5,14 @@
 //  Created by Philipp Kotte on 02.07.25.
 //
 import Foundation
+import ZeroLogger
 
 /// Eine Klasse, die ein Verzeichnis auf Dateiänderungen überwacht.
 class DirectoryMonitor {
     private var fileSystemEventStream: FSEventStreamRef!
     private let path: String
     private let callback: () -> Void
+    private var logger = Logger(label: "zero.watcher.directory")
 
     init?(path: String, callback: @escaping () -> Void) {
         self.path = path
@@ -43,7 +45,7 @@ class DirectoryMonitor {
     }
 
     func start() {
-        print("👀 [Watcher] Überwache Verzeichnis: \(path)")
+        logger.info("👀 [Watcher] Überwache Verzeichnis: \(path)")
         FSEventStreamSetDispatchQueue(fileSystemEventStream, DispatchQueue.main)
         FSEventStreamStart(fileSystemEventStream)
     }

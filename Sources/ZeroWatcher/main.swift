@@ -9,7 +9,7 @@
 
 import Foundation
 import CoreServices
-
+import ZeroLogger
 
 // --- Konfiguration ---
 let configuration = (
@@ -20,7 +20,7 @@ let configuration = (
 )
 
 // --- Hauptlogik des Watchers ---
-
+let logger = Logger(label: "zero.watcher.main")
 let runner = ProcessRunner(executable: configuration.executable)
 var debounceTimer: Timer?
 
@@ -29,7 +29,7 @@ let monitor = DirectoryMonitor(path: configuration.watchPath) {
     debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
         // Führe die Aktionen auf dem Main-Actor aus, um Concurrency-Fehler zu vermeiden.
         DispatchQueue.main.async {
-            print("\n🔄 [Watcher] Dateiänderung erkannt!")
+            logger.dev("\n🔄 [Watcher] Dateiänderung erkannt!")
             runner.stop()
             runner.start()
         }
@@ -41,5 +41,5 @@ if let monitor = monitor {
     runner.start()
     RunLoop.main.run()
 } else {
-    print("❌ [Watcher] konnte nicht gestartet werden.")
+    logger.error("❌ [Watcher] konnte nicht gestartet werden.")
 }

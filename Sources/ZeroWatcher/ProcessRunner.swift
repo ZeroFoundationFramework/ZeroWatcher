@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import ZeroLogger
 
 /// Eine Klasse, die einen Prozess (wie deinen Server) verwaltet.
 public class ProcessRunner {
     private var process: Process?
     private let executable: String
+    private var logger = Logger(label: "zero.watcher.process")
 
     init(executable: String) {
         self.executable = executable
@@ -18,7 +20,7 @@ public class ProcessRunner {
 
     /// Startet den Kompilierungs- und Ausführungsprozess.
     func start() {
-        print("🚀 [Watcher] Kompiliere und starte `\(executable)`...")
+        logger.dev("🚀 [Watcher] Kompiliere und starte `\(executable)`...")
         
         let buildProcess = Process()
         buildProcess.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
@@ -28,16 +30,16 @@ public class ProcessRunner {
             try buildProcess.run()
             buildProcess.waitUntilExit()
         } catch {
-            print("❌ [Watcher] Fehler beim Kompilieren: \(error)")
+            logger.error("❌ [Watcher] Fehler beim Kompilieren: \(error)")
             return
         }
 
         guard buildProcess.terminationStatus == 0 else {
-            print("❌ [Watcher] Kompilierung fehlgeschlagen. Warte auf die nächste Änderung.")
+            logger.error("❌ [Watcher] Kompilierung fehlgeschlagen. Warte auf die nächste Änderung.")
             return
         }
         
-        print("✅ [Watcher] Kompilierung erfolgreich. Starte den Server...")
+        logger.dev("✅ [Watcher] Kompilierung erfolgreich. Starte den Server...")
 
         let pathProcess = Process()
         pathProcess.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
@@ -57,7 +59,7 @@ public class ProcessRunner {
                 process = Process()
                 process?.executableURL = URL(fileURLWithPath: executablePath)
                 try process?.run()
-                print("✅ [Watcher] Server mit PID \(process?.processIdentifier ?? -1) läuft.")
+                logger.dev("✅ [Watcher] Server mit PID \(process?.processIdentifier ?? -1) läuft.")
             }
         } catch {
             print("❌ [Watcher] Server konnte nicht gestartet werden: \(error)")
@@ -67,7 +69,7 @@ public class ProcessRunner {
     /// Stoppt den laufenden Serverprozess auf eine robuste Weise.
     func stop() {
         guard let process = process, process.isRunning else { return }
-        print("🛑 [Watcher] Stoppe Serverprozess (PID \(process.processIdentifier))...")
+        logger.error("🛑 [Watcher] Stoppe Serverprozess (PID \(process.processIdentifier))...")
 
         // 1. Sende ein "sanftes" Interrupt-Signal (wie Ctrl+C).
         // Das gibt dem Server die Chance, sich selbst sauber zu beenden (Graceful Shutdown).
@@ -81,12 +83,12 @@ public class ProcessRunner {
 
         // 3. Wenn der Prozess immer noch läuft, beende ihn zwangsweise.
         if process.isRunning {
-            print("⚠️ [Watcher] Prozess reagiert nicht, erzwinge Beendigung...")
+            logger.warning("⚠️ [Watcher] Prozess reagiert nicht, erzwinge Beendigung...")
             process.terminate() // Sendet SIGTERM
             process.waitUntilExit() // Warte jetzt auf den erzwungenen Exit.
         }
         
-        print("✅ [Watcher] Prozess beendet.")
+        logger.dev("✅ [Watcher] Prozess beendet.")
         self.process = nil
     }
 }
