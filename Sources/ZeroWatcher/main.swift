@@ -16,7 +16,7 @@ let configuration = (
     // Der Name deines Executable-Produkts, wie in Package.swift definiert.
     executable: "App", // <-- Sollte mit dem Namen deines App-Targets übereinstimmen
     // Das Verzeichnis, das auf Änderungen überwacht werden soll.
-    watchPath: "./Sources/App"
+    watchPath: "./Sources"
 )
 
 // --- Hauptlogik des Watchers ---
