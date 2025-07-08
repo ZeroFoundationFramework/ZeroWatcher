@@ -21,6 +21,28 @@ let configuration = (
 
 // --- Hauptlogik des Watchers ---
 let logger = Logger(label: "zero.watcher.main")
+
+func startCommandListener() {
+    DispatchQueue.global(qos: .background).async {
+        while true {
+            if let line = readLine(strippingNewline: true) {
+                if line.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "kill" {
+                    DispatchQueue.main.async {
+                        logger.info("[Watcher] 'kill' empfangen. Beende...")
+                        runner.stop()
+                        monitor?.stop()
+                        exit(0)
+                    }
+                    break
+                }
+            } else {
+                // EOF (z.B. piped input), dann abbrechen
+                break
+            }
+        }
+    }
+}
+
 let runner = ProcessRunner(executable: configuration.executable)
 var debounceTimer: Timer?
 
@@ -39,6 +61,7 @@ let monitor = DirectoryMonitor(path: configuration.watchPath) {
 if let monitor = monitor {
     monitor.start()
     runner.start()
+    startCommandListener()
     RunLoop.main.run()
 } else {
     logger.error("❌ [Watcher] konnte nicht gestartet werden.")
